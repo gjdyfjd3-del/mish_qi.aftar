@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تركيب الإطارات عالية الدقة</title>
+  <title>تركيب الإطارات - معالجة القياس</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -107,11 +107,10 @@
   </div>
 
   <div class="preview-box">
-    <!-- تم رفع الدقة لـ 1080x1080 لعرض شديد الوضوح -->
     <canvas id="canvas" width="1080" height="1080"></canvas>
   </div>
 
-  <button class="btn-download" onclick="downloadImage()">تحميل الصورة عالية الدقة</button>
+  <button class="btn-download" onclick="downloadImage()">تحميل الصورة النهائية</button>
 </div>
 
 <script>
@@ -152,9 +151,15 @@
   function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // تفعيل أعلى جودة لتنعيم الصور عند الرسم
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
+
+    // 1. رسم الصورة الشخصية وتوسيطها دائریاً
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
 
     if (userImage) {
       const minDimension = Math.min(userImage.width, userImage.height);
@@ -169,9 +174,19 @@
       ctx.textAlign = "center";
       ctx.fillText("قم برفع صورتك هنا", canvas.width / 2, canvas.height / 2);
     }
+    ctx.restore();
 
+    // 2. رسم الإطار بحيث يتمدد لتغطية الحواف تماماً وبشكل متناسق (Aspect Fill)
     if (selectedFrameImg.complete && selectedFrameImg.naturalWidth !== 0) {
-      ctx.drawImage(selectedFrameImg, 0, 0, canvas.width, canvas.height);
+      const imgWidth = selectedFrameImg.naturalWidth;
+      const imgHeight = selectedFrameImg.naturalHeight;
+      
+      // حساب المقاييس لتغطية كامل الحجم بدون انكماش
+      const scale = Math.max(canvas.width / imgWidth, canvas.height / imgHeight);
+      const x = (canvas.width / 2) - (imgWidth / 2) * scale;
+      const y = (canvas.height / 2) - (imgHeight / 2) * scale;
+
+      ctx.drawImage(selectedFrameImg, x, y, imgWidth * scale, imgHeight * scale);
     }
   }
 

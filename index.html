@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>أداة تركيب الإطارات التراثية</title>
+  <title>تركيب الإطارات عالية الدقة</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -20,10 +20,7 @@
       border-radius: 16px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     }
-    h2 {
-      color: #333;
-      margin-bottom: 20px;
-    }
+    h2 { color: #333; margin-bottom: 20px; }
     .upload-btn-wrapper {
       position: relative;
       overflow: hidden;
@@ -43,16 +40,11 @@
     .upload-btn-wrapper input[type=file] {
       font-size: 100px;
       position: absolute;
-      left: 0;
-      top: 0;
+      left: 0; top: 0;
       opacity: 0;
       cursor: pointer;
     }
-    .frames-title {
-      font-weight: bold;
-      margin-top: 15px;
-      color: #555;
-    }
+    .frames-title { font-weight: bold; margin-top: 15px; color: #555; }
     .frames {
       display: flex;
       justify-content: center;
@@ -115,10 +107,11 @@
   </div>
 
   <div class="preview-box">
-    <canvas id="canvas" width="600" height="600"></canvas>
+    <!-- تم رفع الدقة لـ 1080x1080 لعرض شديد الوضوح -->
+    <canvas id="canvas" width="1080" height="1080"></canvas>
   </div>
 
-  <button class="btn-download" onclick="downloadImage()">تحميل الصورة النهائية</button>
+  <button class="btn-download" onclick="downloadImage()">تحميل الصورة عالية الدقة</button>
 </div>
 
 <script>
@@ -158,6 +151,10 @@
 
   function render() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // تفعيل أعلى جودة لتنعيم الصور عند الرسم
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
 
     if (userImage) {
       const minDimension = Math.min(userImage.width, userImage.height);
@@ -168,7 +165,7 @@
       ctx.fillStyle = "#e5e7eb";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = "#9ca3af";
-      ctx.font = "24px system-ui";
+      ctx.font = "36px system-ui";
       ctx.textAlign = "center";
       ctx.fillText("قم برفع صورتك هنا", canvas.width / 2, canvas.height / 2);
     }
@@ -181,7 +178,7 @@
   function downloadImage() {
     const link = document.createElement('a');
     link.download = 'my-avatar-frame.png';
-    link.href = canvas.toDataURL('image/png');
+    link.href = canvas.toDataURL('image/png', 1.0);
     link.click();
   }
 </script>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>أداة تركيب الإطارات التراثية</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      text-align: center;
+      background-color: #f4f6f8;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 500px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    h2 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    .upload-btn-wrapper {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      margin-bottom: 15px;
+    }
+    .btn-upload {
+      border: 2px dashed #007bff;
+      color: #007bff;
+      background-color: #f0f7ff;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .upload-btn-wrapper input[type=file] {
+      font-size: 100px;
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .frames-title {
+      font-weight: bold;
+      margin-top: 15px;
+      color: #555;
+    }
+    .frames {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 15px 0 25px 0;
+    }
+    .frame-option {
+      width: 75px;
+      height: 75px;
+      border: 3px solid #e0e0e0;
+      border-radius: 50%;
+      cursor: pointer;
+      object-fit: cover;
+      transition: all 0.2s ease;
+      background: #f9f9f9;
+    }
+    .frame-option.selected {
+      border-color: #10b981;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+    .preview-box {
+      margin: 20px 0;
+      display: flex;
+      justify-content: center;
+    }
+    canvas {
+      max-width: 100%;
+      height: auto;
+      border-radius: 50%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      background-color: #fafafa;
+    }
+    .btn-download {
+      background-color: #10b981;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>تركيب إطار على صورتك</h2>
+  
+  <div class="upload-btn-wrapper">
+    <button class="btn-upload">اختر صورتك الشخصية</button>
+    <input type="file" id="upload" accept="image/*">
+  </div>
+
+  <div class="frames-title">اختر شكل الإطار:</div>
+  <div class="frames">
+    <img src="red_frame.png" class="frame-option selected" alt="إطار أحمر" onclick="selectFrame(this)">
+    <img src="green_frame.png" class="frame-option" alt="إطار أخضر" onclick="selectFrame(this)">
+  </div>
+
+  <div class="preview-box">
+    <canvas id="canvas" width="600" height="600"></canvas>
+  </div>
+
+  <button class="btn-download" onclick="downloadImage()">تحميل الصورة النهائية</button>
+</div>
+
+<script>
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  let userImage = null;
+  let selectedFrameImg = new Image();
+
+  const initialFrame = document.querySelector('.frame-option.selected');
+  if (initialFrame) {
+    selectedFrameImg.src = initialFrame.src;
+    selectedFrameImg.onload = render;
+  }
+
+  document.getElementById('upload').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        userImage = new Image();
+        userImage.onload = render;
+        userImage.src = event.target.result;
+      }
+      reader.readAsDataURL(file);
+    }
+  });
+
+  function selectFrame(element) {
+    document.querySelectorAll('.frame-option').forEach(el => el.classList.remove('selected'));
+    element.classList.add('selected');
+    
+    selectedFrameImg = new Image();
+    selectedFrameImg.src = element.src;
+    selectedFrameImg.onload = render;
+  }
+
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (userImage) {
+      const minDimension = Math.min(userImage.width, userImage.height);
+      const sx = (userImage.width - minDimension) / 2;
+      const sy = (userImage.height - minDimension) / 2;
+      ctx.drawImage(userImage, sx, sy, minDimension, minDimension, 0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.fillStyle = "#e5e7eb";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#9ca3af";
+      ctx.font = "24px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText("قم برفع صورتك هنا", canvas.width / 2, canvas.height / 2);
+    }
+
+    if (selectedFrameImg.complete && selectedFrameImg.naturalWidth !== 0) {
+      ctx.drawImage(selectedFrameImg, 0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  function downloadImage() {
+    const link = document.createElement('a');
+    link.download = 'my-avatar-frame.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+</script>
+
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تركيب الإطارات - معالجة القياس</title>
+  <title>تركيب الإطارات - إزالة الأطراف</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -154,13 +154,14 @@
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    // 1. رسم الصورة الشخصية وتوسيطها دائریاً
+    // تطبيق ماسك دائري شامل يحذف أي أطراف خارجية للصورة أو الإطار
     ctx.save();
     ctx.beginPath();
     ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
 
+    // 1. رسم الصورة الشخصية
     if (userImage) {
       const minDimension = Math.min(userImage.width, userImage.height);
       const sx = (userImage.width - minDimension) / 2;
@@ -174,20 +175,20 @@
       ctx.textAlign = "center";
       ctx.fillText("قم برفع صورتك هنا", canvas.width / 2, canvas.height / 2);
     }
-    ctx.restore();
 
-    // 2. رسم الإطار بحيث يتمدد لتغطية الحواف تماماً وبشكل متناسق (Aspect Fill)
+    // 2. رسم الإطار وقص أطرافه الزائدة تلقائياً
     if (selectedFrameImg.complete && selectedFrameImg.naturalWidth !== 0) {
       const imgWidth = selectedFrameImg.naturalWidth;
       const imgHeight = selectedFrameImg.naturalHeight;
       
-      // حساب المقاييس لتغطية كامل الحجم بدون انكماش
       const scale = Math.max(canvas.width / imgWidth, canvas.height / imgHeight);
       const x = (canvas.width / 2) - (imgWidth / 2) * scale;
       const y = (canvas.height / 2) - (imgHeight / 2) * scale;
 
       ctx.drawImage(selectedFrameImg, x, y, imgWidth * scale, imgHeight * scale);
     }
+
+    ctx.restore();
   }
 
   function downloadImage() {

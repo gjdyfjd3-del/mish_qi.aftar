@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تركيب الإطارات - إزالة الأطراف</title>
+  <title>تركيب الإطارات - ضبط الحواف</title>
   <style>
     body {
       font-family: system-ui, -apple-system, sans-serif;
@@ -154,14 +154,14 @@
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
 
-    // تطبيق ماسك دائري شامل يحذف أي أطراف خارجية للصورة أو الإطار
+    // 1. قص الكانفاس دائرية بحجم أصغر قليلاً لإخفاء الحواف الخارجية الصليبة
     ctx.save();
     ctx.beginPath();
-    ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, 0, Math.PI * 2);
+    ctx.arc(canvas.width / 2, canvas.height / 2, (canvas.width / 2) - 15, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
 
-    // 1. رسم الصورة الشخصية
+    // 2. رسم صورة المستخدم
     if (userImage) {
       const minDimension = Math.min(userImage.width, userImage.height);
       const sx = (userImage.width - minDimension) / 2;
@@ -176,12 +176,14 @@
       ctx.fillText("قم برفع صورتك هنا", canvas.width / 2, canvas.height / 2);
     }
 
-    // 2. رسم الإطار وقص أطرافه الزائدة تلقائياً
+    // 3. التكبير والتثبيت للإطار ليتخلص من الأطراف الظاهرة
     if (selectedFrameImg.complete && selectedFrameImg.naturalWidth !== 0) {
       const imgWidth = selectedFrameImg.naturalWidth;
       const imgHeight = selectedFrameImg.naturalHeight;
       
-      const scale = Math.max(canvas.width / imgWidth, canvas.height / imgHeight);
+      // تكبير الإطار بمقدار 1.15 لإخراج الحواف المفرغة الخارجية خارج نطاق القص
+      const zoomFactor = 1.15;
+      const scale = Math.max(canvas.width / imgWidth, canvas.height / imgHeight) * zoomFactor;
       const x = (canvas.width / 2) - (imgWidth / 2) * scale;
       const y = (canvas.height / 2) - (imgHeight / 2) * scale;
 

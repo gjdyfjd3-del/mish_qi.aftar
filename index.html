@@ -1,205 +1,143 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تركيب الإطارات - ضبط الحواف</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      text-align: center;
-      background-color: #f4f6f8;
-      padding: 20px;
-      margin: 0;
-    }
-    .container {
-      max-width: 500px;
-      margin: 20px auto;
-      background: #ffffff;
-      padding: 25px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    }
-    h2 { color: #333; margin-bottom: 20px; }
-    .upload-btn-wrapper {
-      position: relative;
-      overflow: hidden;
-      display: inline-block;
-      margin-bottom: 15px;
-    }
-    .btn-upload {
-      border: 2px dashed #007bff;
-      color: #007bff;
-      background-color: #f0f7ff;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    .upload-btn-wrapper input[type=file] {
-      font-size: 100px;
-      position: absolute;
-      left: 0; top: 0;
-      opacity: 0;
-      cursor: pointer;
-    }
-    .frames-title { font-weight: bold; margin-top: 15px; color: #555; }
-    .frames {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin: 15px 0 25px 0;
-    }
-    .frame-option {
-      width: 75px;
-      height: 75px;
-      border: 3px solid #e0e0e0;
-      border-radius: 50%;
-      cursor: pointer;
-      object-fit: cover;
-      transition: all 0.2s ease;
-      background: #f9f9f9;
-    }
-    .frame-option.selected {
-      border-color: #10b981;
-      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
-    }
-    .preview-box {
-      margin: 20px 0;
-      display: flex;
-      justify-content: center;
-    }
-    canvas {
-      max-width: 100%;
-      height: auto;
-      border-radius: 50%;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      background-color: #fafafa;
-    }
-    .btn-download {
-      background-color: #10b981;
-      color: white;
-      border: none;
-      padding: 12px 25px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 8px;
-      cursor: pointer;
-      width: 100%;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سند - نظام تحديد الطابق بالضغط الجوي</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #030712;
+            color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        h2 { color: #ef4444; margin-bottom: 15px; }
+        .data-box {
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: right;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+        .btn {
+            background-color: #38bdf8;
+            color: #030712;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+        .btn:hover { background-color: #0ea5e9; }
+    </style>
 </head>
 <body>
 
-<div class="container">
-  <h2>تركيب إطار على صورتك</h2>
-  
-  <div class="upload-btn-wrapper">
-    <button class="btn-upload">اختر صورتك الشخصية</button>
-    <input type="file" id="upload" accept="image/*">
-  </div>
+    <div class="card">
+        <h2>🌡️ مستشعر الطابق (الضغط الجوي)</h2>
+        
+        <div class="data-box">
+            <div>📈 **قراءة الضغط:** <span id="pressure-val" style="color: #38bdf8;">بانتظار القياس...</span></div>
+            <div>🏢 **الدور / الطابق:** <span id="floor-val" style="color: #22c55e;">--</span></div>
+        </div>
 
-  <div class="frames-title">اختر شكل الإطار:</div>
-  <div class="frames">
-    <img src="red_frame.png" class="frame-option selected" alt="إطار أحمر" onclick="selectFrame(this)">
-    <img src="green_frame.png" class="frame-option" alt="إطار أخضر" onclick="selectFrame(this)">
-  </div>
+        <button class="btn" onclick="startBarometerSensor()">بدء قياس الطابق بالضغط</button>
+    </div>
 
-  <div class="preview-box">
-    <canvas id="canvas" width="1080" height="1080"></canvas>
-  </div>
+    <script>
+        let basePressure = null; // الضغط الأساسي عند الطابق الأرضي (صفر)
 
-  <button class="btn-download" onclick="downloadImage()">تحميل الصورة النهائية</button>
-</div>
+        function startBarometerSensor() {
+            const pressureValElem = document.getElementById("pressure-val");
+            const floorValElem = document.getElementById("floor-val");
 
-<script>
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  
-  let userImage = null;
-  let selectedFrameImg = new Image();
+            // التحقق من دعم المتصفح لمستشعر الضغط الجوي (AmbientPressureSensor)
+            if ('PressureObserver' in window) {
+                try {
+                    const observer = new PressureObserver((obs) => {
+                        obs.forEach((record) => {
+                            let currentPressure = record.pressure; // الضغط بالهكتوباسكال hPa
+                            processPressureData(currentPressure, pressureValElem, floorValElem);
+                        });
+                    });
+                    observer.observe({ frequency: 1 });
+                    pressureValElem.innerText = "جاري الاستشعار (PressureObserver)...";
+                } catch (e) {
+                    fallbackToGeolocationAltitude(pressureValElem, floorValElem);
+                }
+            } else if ('AmbientPressureSensor' in window) {
+                try {
+                    const sensor = new AmbientPressureSensor({ frequency: 1 });
+                    sensor.addEventListener('reading', () => {
+                        let currentPressure = sensor.pressure;
+                        processPressureData(currentPressure, pressureValElem, floorValElem);
+                    });
+                    sensor.start();
+                    pressureValElem.innerText = "جاري قراءة المستشعر المباشر...";
+                } catch (err) {
+                    fallbackToGeolocationAltitude(pressureValElem, floorValElem);
+                }
+            } else {
+                // إذا لم يدعم الجهاز مستشعر الضغط المباشر، نتحول لتقدير الارتفاع عبر GPS كبديل هندسي
+                fallbackToGeolocationAltitude(pressureValElem, floorValElem);
+            }
+        }
 
-  const initialFrame = document.querySelector('.frame-option.selected');
-  if (initialFrame) {
-    selectedFrameImg.src = initialFrame.src;
-    selectedFrameImg.onload = render;
-  }
+        // دالة معالجة فارق الضغط الجوي لحساب الطابق بدقة
+        function processPressureData(pressure, pElem, fElem) {
+            pElem.innerText = `${pressure.toFixed(2)} hPa`;
 
-  document.getElementById('upload').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        userImage = new Image();
-        userImage.onload = render;
-        userImage.src = event.target.result;
-      }
-      reader.readAsDataURL(file);
-    }
-  });
+            // تثبيت نقطة الصفر (الطابق الأرضي) عند أول قراءة يتم التقاطها
+            if (basePressure === null) {
+                basePressure = pressure;
+            }
 
-  function selectFrame(element) {
-    document.querySelectorAll('.frame-option').forEach(el => el.classList.remove('selected'));
-    element.classList.add('selected');
-    
-    selectedFrameImg = new Image();
-    selectedFrameImg.src = element.src;
-    selectedFrameImg.onload = render;
-  }
+            // الفارق الضجوي بين كل طابق وطابق يعادل تقريباً 0.12 hPa (كلما صعدنا ينخفض الضغط)
+            let pressureDifference = basePressure - pressure; 
+            let estimatedFloor = Math.max(0, Math.round(pressureDifference / 0.12));
 
-  function render() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
+            fElem.innerText = estimatedFloor === 0 ? "الطابق الأرضي (Ground)" : `الدور رقم ${estimatedFloor}`;
+        }
 
-    // 1. قص الكانفاس دائرية بحجم أصغر قليلاً لإخفاء الحواف الخارجية الصليبة
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(canvas.width / 2, canvas.height / 2, (canvas.width / 2) - 15, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-
-    // 2. رسم صورة المستخدم
-    if (userImage) {
-      const minDimension = Math.min(userImage.width, userImage.height);
-      const sx = (userImage.width - minDimension) / 2;
-      const sy = (userImage.height - minDimension) / 2;
-      ctx.drawImage(userImage, sx, sy, minDimension, minDimension, 0, 0, canvas.width, canvas.height);
-    } else {
-      ctx.fillStyle = "#e5e7eb";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#9ca3af";
-      ctx.font = "36px system-ui";
-      ctx.textAlign = "center";
-      ctx.fillText("قم برفع صورتك هنا", canvas.width / 2, canvas.height / 2);
-    }
-
-    // 3. التكبير والتثبيت للإطار ليتخلص من الأطراف الظاهرة
-    if (selectedFrameImg.complete && selectedFrameImg.naturalWidth !== 0) {
-      const imgWidth = selectedFrameImg.naturalWidth;
-      const imgHeight = selectedFrameImg.naturalHeight;
-      
-      // تكبير الإطار بمقدار 1.15 لإخراج الحواف المفرغة الخارجية خارج نطاق القص
-      const zoomFactor = 1.15;
-      const scale = Math.max(canvas.width / imgWidth, canvas.height / imgHeight) * zoomFactor;
-      const x = (canvas.width / 2) - (imgWidth / 2) * scale;
-      const y = (canvas.height / 2) - (imgHeight / 2) * scale;
-
-      ctx.drawImage(selectedFrameImg, x, y, imgWidth * scale, imgHeight * scale);
-    }
-
-    ctx.restore();
-  }
-
-  function downloadImage() {
-    const link = document.createElement('a');
-    link.download = 'my-avatar-frame.png';
-    link.href = canvas.toDataURL('image/png', 1.0);
-    link.click();
-  }
-</script>
-
+        // الطريقة البديلة: الاعتماد على ارتفاع الارتفاع الجغرافي الـ GPS في حال عدم توفر مستشعر الضغط المادي بالمتصفح
+        function fallbackToGeolocationAltitude(pElem, fElem) {
+            pElem.innerText = "مستشعر الضغط غير مدعوم، استخدام الـ GPS البديل...";
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        let alt = position.coords.altitude || 0;
+                        let floor = Math.max(0, Math.round(alt / 3.5));
+                        pElem.innerText = `الارتفاع الجغرافي: ${alt.toFixed(1)} متر`;
+                        fElem.innerText = floor === 0 ? "الطابق الأرضي" : `الدور رقم ${floor}`;
+                    },
+                    (error) => {
+                        pElem.innerText = "تعذر قراءة المستشعر أو الموقع";
+                        fElem.innerText = "غير معروف";
+                    },
+                    { enableHighAccuracy: true }
+                );
+            }
+        }
+    </script>
 </body>
 </html>

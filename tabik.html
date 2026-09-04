@@ -1,1 +1,143 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سند - نظام تحديد الطابق بالضغط الجوي</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: #030712;
+            color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        h2 { color: #ef4444; margin-bottom: 15px; }
+        .data-box {
+            background: #0f172a;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: right;
+            font-size: 15px;
+            line-height: 1.8;
+        }
+        .btn {
+            background-color: #38bdf8;
+            color: #030712;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            width: 100%;
+            transition: 0.3s;
+        }
+        .btn:hover { background-color: #0ea5e9; }
+    </style>
+</head>
+<body>
 
+    <div class="card">
+        <h2>🌡️ مستشعر الطابق (الضغط الجوي)</h2>
+        
+        <div class="data-box">
+            <div>📈 **قراءة الضغط:** <span id="pressure-val" style="color: #38bdf8;">بانتظار القياس...</span></div>
+            <div>🏢 **الدور / الطابق:** <span id="floor-val" style="color: #22c55e;">--</span></div>
+        </div>
+
+        <button class="btn" onclick="startBarometerSensor()">بدء قياس الطابق بالضغط</button>
+    </div>
+
+    <script>
+        let basePressure = null; // الضغط الأساسي عند الطابق الأرضي (صفر)
+
+        function startBarometerSensor() {
+            const pressureValElem = document.getElementById("pressure-val");
+            const floorValElem = document.getElementById("floor-val");
+
+            // التحقق من دعم المتصفح لمستشعر الضغط الجوي (AmbientPressureSensor)
+            if ('PressureObserver' in window) {
+                try {
+                    const observer = new PressureObserver((obs) => {
+                        obs.forEach((record) => {
+                            let currentPressure = record.pressure; // الضغط بالهكتوباسكال hPa
+                            processPressureData(currentPressure, pressureValElem, floorValElem);
+                        });
+                    });
+                    observer.observe({ frequency: 1 });
+                    pressureValElem.innerText = "جاري الاستشعار (PressureObserver)...";
+                } catch (e) {
+                    fallbackToGeolocationAltitude(pressureValElem, floorValElem);
+                }
+            } else if ('AmbientPressureSensor' in window) {
+                try {
+                    const sensor = new AmbientPressureSensor({ frequency: 1 });
+                    sensor.addEventListener('reading', () => {
+                        let currentPressure = sensor.pressure;
+                        processPressureData(currentPressure, pressureValElem, floorValElem);
+                    });
+                    sensor.start();
+                    pressureValElem.innerText = "جاري قراءة المستشعر المباشر...";
+                } catch (err) {
+                    fallbackToGeolocationAltitude(pressureValElem, floorValElem);
+                }
+            } else {
+                // إذا لم يدعم الجهاز مستشعر الضغط المباشر، نتحول لتقدير الارتفاع عبر GPS كبديل هندسي
+                fallbackToGeolocationAltitude(pressureValElem, floorValElem);
+            }
+        }
+
+        // دالة معالجة فارق الضغط الجوي لحساب الطابق بدقة
+        function processPressureData(pressure, pElem, fElem) {
+            pElem.innerText = `${pressure.toFixed(2)} hPa`;
+
+            // تثبيت نقطة الصفر (الطابق الأرضي) عند أول قراءة يتم التقاطها
+            if (basePressure === null) {
+                basePressure = pressure;
+            }
+
+            // الفارق الضجوي بين كل طابق وطابق يعادل تقريباً 0.12 hPa (كلما صعدنا ينخفض الضغط)
+            let pressureDifference = basePressure - pressure; 
+            let estimatedFloor = Math.max(0, Math.round(pressureDifference / 0.12));
+
+            fElem.innerText = estimatedFloor === 0 ? "الطابق الأرضي (Ground)" : `الدور رقم ${estimatedFloor}`;
+        }
+
+        // الطريقة البديلة: الاعتماد على ارتفاع الارتفاع الجغرافي الـ GPS في حال عدم توفر مستشعر الضغط المادي بالمتصفح
+        function fallbackToGeolocationAltitude(pElem, fElem) {
+            pElem.innerText = "مستشعر الضغط غير مدعوم، استخدام الـ GPS البديل...";
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        let alt = position.coords.altitude || 0;
+                        let floor = Math.max(0, Math.round(alt / 3.5));
+                        pElem.innerText = `الارتفاع الجغرافي: ${alt.toFixed(1)} متر`;
+                        fElem.innerText = floor === 0 ? "الطابق الأرضي" : `الدور رقم ${floor}`;
+                    },
+                    (error) => {
+                        pElem.innerText = "تعذر قراءة المستشعر أو الموقع";
+                        fElem.innerText = "غير معروف";
+                    },
+                    { enableHighAccuracy: true }
+                );
+            }
+        }
+    </script>
+</body>
+</html>
